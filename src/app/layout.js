@@ -3,28 +3,30 @@
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import "@/styles/globals.css";
 
 function RedirectBasedOnRole() {
-    const { user, role, loading } = useAuth();
-    const router = useRouter();
+    const { user, role, loading } = useAuth() || {};
+    const [isRedirecting, setIsRedirecting] = useState(false);
+    const pathname = usePathname();
 
     useEffect(() => {
-        if (loading) return; // Wait until authentication is fully loaded
+        if (loading) return;
 
         if (!user) {
-            router.replace("/login");
             return;
         }
 
-        if (role) {
+        if (role && !isRedirecting) {
+            setIsRedirecting(true);
             const redirectTo = role === "admin" ? "/admin" : role === "subadmin" ? "/subadmin" : "/user";
-            if (router.pathname !== redirectTo) {
-                router.replace(redirectTo);
+            if (pathname !== redirectTo) {
+                window.location.replace(redirectTo);
             }
         }
-    }, [user, role, loading, router]);
+    }, [user, role, loading, pathname, isRedirecting]);
 
     if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
@@ -34,16 +36,26 @@ function RedirectBasedOnRole() {
 export default function Layout({ children }) {
     return (
         <AuthProvider>
-            <RedirectBasedOnRole />
             <html lang="en">
-                <body>
+                <body className="bg-gray-100 text-gray-900 flex flex-col min-h-screen">
                     <Navbar />
-                    <div className="flex">
-                        <Sidebar />
-                        <main className="flex-1 p-4">{children}</main>
-                    </div>
+                    <AuthWrapper>{children}</AuthWrapper>
                 </body>
             </html>
         </AuthProvider>
+    );
+}
+
+function AuthWrapper({ children }) {
+    const { role } = useAuth() || {};
+    const pathname = usePathname();
+    const hideSidebarRoutes = ["/login", "/register"];
+    const showSidebar = role === "admin" || role === "subadmin" || role === "user";
+
+    return (
+        <div className="flex flex-1">
+            {showSidebar && !hideSidebarRoutes.includes(pathname) && <Sidebar />}
+            <main className="flex-1 p-6 bg-white shadow-lg rounded-lg m-4">{children}</main>
+        </div>
     );
 }

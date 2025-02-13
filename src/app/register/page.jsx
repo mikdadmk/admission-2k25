@@ -1,5 +1,5 @@
+// admission-management/src/app/register/page.js
 "use client";
-
 import { useState } from "react";
 import { auth, googleProvider, createUserWithEmailAndPassword, signInWithPopup } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
@@ -14,8 +14,6 @@ export default function RegisterPage() {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            console.log("User registered:", user.uid);
-
             // Call API to store user in MongoDB
             await fetch("/api/register", {
                 method: "POST",
@@ -25,7 +23,6 @@ export default function RegisterPage() {
 
             router.push("/login");
         } catch (error) {
-            console.error("Registration error:", error);
             alert(error.message);
         }
     };
@@ -34,8 +31,6 @@ export default function RegisterPage() {
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
-
-            console.log("Google Sign-up:", user.uid);
 
             // Call API to store user in MongoDB
             await fetch("/api/register", {
@@ -46,18 +41,19 @@ export default function RegisterPage() {
 
             router.push("/");
         } catch (error) {
-            console.error("Google Sign-up error:", error);
             alert(error.message);
         }
     };
 
     return (
-        <div>
-            <h1>Register</h1>
-            <input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-            <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-            <button onClick={handleRegister}>Register</button>
-            <button onClick={handleGoogleSignUp}>Sign Up with Google</button>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-green-500 to-blue-500 px-4">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Register</h1>
+                <input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-green-500" />
+                <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-green-500" />
+                <button onClick={handleRegister} className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded text-lg transition duration-300">Register</button>
+                <button onClick={handleGoogleSignUp} className="w-full bg-red-500 hover:bg-red-600 text-white p-3 rounded text-lg mt-4 transition duration-300">Sign Up with Google</button>
+            </div>
         </div>
     );
 }

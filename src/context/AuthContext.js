@@ -16,16 +16,17 @@ export function AuthProvider({ children }) {
         const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
             if (authUser) {
                 try {
-                    // Fetch role from MongoDB API
+                    // Fetch user role from MongoDB
                     const res = await fetch(`/api/users?uid=${authUser.uid}`);
                     const data = await res.json();
 
                     if (data.role) {
                         setUser(authUser);
                         setRole(data.role);
+                        document.cookie = `authToken=${authUser.uid}; path=/`; // Set Firebase session
                     } else {
-                        setUser(null);
-                        setRole(null);
+                        setUser(authUser);
+                        setRole("user");
                     }
                 } catch (error) {
                     console.error("Error fetching user role:", error);
@@ -35,6 +36,7 @@ export function AuthProvider({ children }) {
             } else {
                 setUser(null);
                 setRole(null);
+                document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"; // Clear session
             }
             setLoading(false);
         });
