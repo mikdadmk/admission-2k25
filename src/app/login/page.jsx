@@ -1,4 +1,3 @@
-// admission-management/src/app/login/page.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,42 +10,67 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const router = useRouter();
-    const { user, role } = useAuth();
+    const { user, role, setUser, setRole } = useAuth();
 
     useEffect(() => {
         if (user && role) {
+            console.log(`🔹 Redirecting to ${role} page`);
             const redirectTo = role === "admin" ? "/admin" : role === "subadmin" ? "/subadmin" : "/user";
             router.push(redirectTo);
         }
     }, [user, role, router]);
 
     const handleLogin = async () => {
-        if (!email || !password) {
-            setErrorMessage("Please enter email and password.");
-            return;
-        }
-
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+            const loggedUser = userCredential.user;
+
+            console.log("🔹 Logged in user:", loggedUser.email);
 
             // Fetch user role from MongoDB
-            const response = await fetch("/api/auth", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            });
+            const response = await fetch(`/api/users?email=${loggedUser.email}`);
+            const userData = await response.json();
 
-            const data = await response.json();
-
-            if (response.ok) {
-                const redirectTo = data.role === "admin" ? "/admin" : data.role === "subadmin" ? "/subadmin" : "/user";
+            if (userData?.role) {
+                console.log(`✅ Role after login: ${userData.role}`);
+                setUser(loggedUser);
+                setRole(userData.role);
+                const redirectTo = userData.role === "admin" ? "/admin" : userData.role === "subadmin" ? "/subadmin" : "/user";
                 router.push(redirectTo);
             } else {
-                setErrorMessage(data.error || "Login failed.");
+                console.log("❌ Role not found in MongoDB.");
+                setErrorMessage("Role not found. Please contact support.");
             }
         } catch (error) {
-            setErrorMessage("Invalid email or password.");
+            console.error("❌ Login error:", error);
+            setErrorMessage(error.message);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const googleUser = result.user;
+
+            console.log("🔹 Google login user:", googleUser.email);
+
+            // Fetch user role from MongoDB
+            const response = await fetch(`/api/users?email=${googleUser.email}`);
+            const userData = await response.json();
+
+            if (userData?.role) {
+                console.log(`✅ Role after Google login: ${userData.role}`);
+                setUser(googleUser);
+                setRole(userData.role);
+                const redirectTo = userData.role === "admin" ? "/admin" : userData.role === "subadmin" ? "/subadmin" : "/user";
+                router.push(redirectTo);
+            } else {
+                console.log("❌ Google user not registered.");
+                setErrorMessage("Google login is only available for registered users.");
+            }
+        } catch (error) {
+            console.error("❌ Google Login Error:", error);
+            setErrorMessage(error.message);
         }
     };
 
@@ -74,6 +98,12 @@ export default function LoginPage() {
                     className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded text-lg transition duration-300"
                 >
                     Login
+                </button>
+                <button 
+                    onClick={handleGoogleLogin} 
+                    className="w-full bg-red-500 hover:bg-red-600 text-white p-3 rounded text-lg mt-4 transition duration-300"
+                >
+                    Login with Google
                 </button>
             </div>
         </div>

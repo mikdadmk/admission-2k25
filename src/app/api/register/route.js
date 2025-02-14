@@ -1,4 +1,3 @@
-// admission-management/src/app/api/register/route.js
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 
@@ -8,9 +7,8 @@ export async function POST(req) {
         const client = await clientPromise;
         const db = client.db("admission_management");
 
-        // Check if the user already exists
+        // Check if user already exists
         const existingUser = await db.collection("users").findOne({ email });
-
         let role = "user"; // Default role is user
 
         if (!existingUser) {
@@ -18,12 +16,12 @@ export async function POST(req) {
             const subadminExists = await db.collection("users").findOne({ role: "subadmin" });
 
             if (!adminExists) {
-                role = "admin"; // First registered user becomes admin
+                role = "admin"; // First user becomes admin
             } else if (!subadminExists) {
-                role = "subadmin"; // Second registered user becomes subadmin
+                role = "subadmin"; // Second user becomes subadmin
             }
         } else {
-            role = existingUser.role; // Keep the existing role
+            role = existingUser.role; // Maintain existing role
         }
 
         // Store or update user in MongoDB with the correct role
@@ -33,9 +31,10 @@ export async function POST(req) {
             { upsert: true }
         );
 
+        console.log(`✅ User Registered - Role: ${role}`);
         return NextResponse.json({ message: "User registered successfully", role }, { status: 200 });
     } catch (error) {
-        console.error("Error registering user:", error);
+        console.error("❌ Registration Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

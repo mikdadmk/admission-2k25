@@ -7,7 +7,7 @@ export async function GET(req) {
         const email = url.searchParams.get("email");
 
         if (!email) {
-            return NextResponse.json({ error: "Email required" }, { status: 400 });
+            return NextResponse.json({ error: "Email is required" }, { status: 400 });
         }
 
         const client = await clientPromise;
@@ -15,12 +15,15 @@ export async function GET(req) {
         const user = await db.collection("users").findOne({ email });
 
         if (!user) {
+            console.log("❌ User not found in database.");
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
+        console.log(`✅ User Found: ${user.email}, Role: ${user.role}`);
         return NextResponse.json({ role: user.role }, { status: 200 });
+
     } catch (error) {
-        console.error("Error fetching user role:", error);
+        console.error("❌ Error fetching user:", error);
         return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 });
     }
 }

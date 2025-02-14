@@ -16,26 +16,30 @@ export function AuthProvider({ children }) {
         const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
             if (authUser) {
                 try {
+                    console.log("🔹 Authenticated User:", authUser.email);
+
+                    // Fetch user role from MongoDB
                     const res = await fetch(`/api/users?email=${authUser.email}`);
                     const data = await res.json();
 
-                    if (data && data.role) {
+                    if (data?.role) {
+                        console.log(`✅ Role set for ${authUser.email}: ${data.role}`);
                         setUser(authUser);
                         setRole(data.role);
-                        document.cookie = `authToken=${authUser.uid}; path=/`; // Save auth token
                     } else {
-                        setUser(null);
-                        setRole(null);
+                        console.log(`❌ No role found for ${authUser.email}`);
+                        setUser(authUser);
+                        setRole("user");
                     }
                 } catch (error) {
-                    console.error("Error fetching user role:", error);
+                    console.error("❌ Error fetching user role:", error);
                     setUser(null);
                     setRole(null);
                 }
             } else {
+                console.log("❌ User signed out");
                 setUser(null);
                 setRole(null);
-                document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"; // Clear auth token
             }
             setLoading(false);
         });

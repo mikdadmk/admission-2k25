@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { auth, googleProvider, createUserWithEmailAndPassword, signInWithPopup } from "@/lib/firebase";
+import { auth, createUserWithEmailAndPassword } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
@@ -31,24 +31,6 @@ export default function RegisterPage() {
         }
     };
 
-    const handleGoogleSignUp = async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const user = result.user;
-
-            // Call API to store user in MongoDB
-            await fetch("/api/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ uid: user.uid, userName: user.displayName, email: user.email, contact: "", institute: "" }),
-            });
-
-            router.push("/");
-        } catch (error) {
-            alert(error.message);
-        }
-    };
-
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-green-500 to-blue-500 px-4">
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
@@ -64,7 +46,6 @@ export default function RegisterPage() {
                 </select>
                 <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-green-500" />
                 <button onClick={handleRegister} className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded text-lg transition duration-300">Register</button>
-                <button onClick={handleGoogleSignUp} className="w-full bg-red-500 hover:bg-red-600 text-white p-3 rounded text-lg mt-4 transition duration-300">Sign Up with Google</button>
             </div>
         </div>
     );

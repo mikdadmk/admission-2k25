@@ -1,4 +1,3 @@
-// admission-management/src/middleware/authMiddleware.js
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 

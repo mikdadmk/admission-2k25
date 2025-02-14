@@ -1,32 +1,26 @@
-// admission-management/src/app/layout.js
 "use client";
 
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import "@/styles/globals.css";
 
 function RedirectBasedOnRole() {
-    const { user, role, loading } = useAuth();
-    const router = useRouter();
-    const pathname = usePathname();
+    const { user, role, loading } = useAuth() || {};
     const [isRedirecting, setIsRedirecting] = useState(false);
+    const pathname = usePathname();
 
     useEffect(() => {
         if (loading) return;
-
-        if (!user) {
-            router.push("/login");
-            return;
-        }
+        if (!user) return;
 
         if (role && !isRedirecting) {
             setIsRedirecting(true);
             const redirectTo = role === "admin" ? "/admin" : role === "subadmin" ? "/subadmin" : "/user";
             if (pathname !== redirectTo) {
-                router.replace(redirectTo);
+                window.location.replace(redirectTo);
             }
         }
     }, [user, role, loading, pathname, isRedirecting]);
@@ -50,14 +44,22 @@ export default function Layout({ children }) {
 }
 
 function AuthWrapper({ children }) {
-    const { role } = useAuth();
+    const { role, loading } = useAuth() || {};
     const pathname = usePathname();
-    const hideSidebarRoutes = ["/login", "/register"];
+    const hideSidebarRoutes = ["/", "/login", "/register"];
+
+    // Wait until role is loaded
+    if (loading) {
+        return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    }
+
     const showSidebar = role === "admin" || role === "subadmin" || role === "user";
 
     return (
-        <div className="flex flex-1">
+        <div className="flex">
+            {/* Sidebar (Only shown on respective pages) */}
             {showSidebar && !hideSidebarRoutes.includes(pathname) && <Sidebar />}
+            {/* Main content with full width when sidebar is hidden */}
             <main className="flex-1 p-6 bg-white shadow-lg rounded-lg m-4">{children}</main>
         </div>
     );
