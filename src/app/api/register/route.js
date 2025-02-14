@@ -8,8 +8,9 @@ export async function POST(req) {
         const client = await clientPromise;
         const db = client.db("admission_management");
 
-        // Check if user already exists
+        // Check if the user already exists
         const existingUser = await db.collection("users").findOne({ email });
+
         let role = "user"; // Default role is user
 
         if (!existingUser) {
@@ -17,12 +18,12 @@ export async function POST(req) {
             const subadminExists = await db.collection("users").findOne({ role: "subadmin" });
 
             if (!adminExists) {
-                role = "admin"; // First user becomes admin
+                role = "admin"; // First registered user becomes admin
             } else if (!subadminExists) {
-                role = "subadmin"; // Second unique user becomes subadmin
+                role = "subadmin"; // Second registered user becomes subadmin
             }
         } else {
-            role = existingUser.role; // Maintain existing role from database
+            role = existingUser.role; // Keep the existing role
         }
 
         // Store or update user in MongoDB with the correct role

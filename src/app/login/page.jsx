@@ -1,4 +1,4 @@
-// admission-management/src/app/login/page.js
+// admission-management/src/app/login/page.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,57 +20,33 @@ export default function LoginPage() {
         }
     }, [user, role, router]);
 
-    const validateEmail = (email) => {
-        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-    };
-
     const handleLogin = async () => {
-        if (!email || !validateEmail(email)) {
-            setErrorMessage("Please enter a valid email address.");
+        if (!email || !password) {
+            setErrorMessage("Please enter email and password.");
             return;
         }
-        if (!password) {
-            setErrorMessage("Please enter your password.");
-            return;
-        }
-        setErrorMessage("");
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // Fetch user role from database
-            const response = await fetch(`/api/users?uid=${user.uid}`);
-            const userData = await response.json();
+            // Fetch user role from MongoDB
+            const response = await fetch("/api/auth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
 
-            if (userData && userData.length > 0 && userData[0].role) {
-                const redirectTo = userData[0].role === "admin" ? "/admin" : userData[0].role === "subadmin" ? "/subadmin" : "/user";
+            const data = await response.json();
+
+            if (response.ok) {
+                const redirectTo = data.role === "admin" ? "/admin" : data.role === "subadmin" ? "/subadmin" : "/user";
                 router.push(redirectTo);
             } else {
-                setErrorMessage("Role not found. Please contact support.");
+                setErrorMessage(data.error || "Login failed.");
             }
         } catch (error) {
-            setErrorMessage(error.message);
-        }
-    };
-
-    const handleGoogleLogin = async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const user = result.user;
-
-            // Fetch user role from database
-            const response = await fetch(`/api/users?uid=${user.uid}`);
-            const userData = await response.json();
-
-            if (userData && userData.length > 0 && userData[0].role) {
-                const redirectTo = userData[0].role === "admin" ? "/admin" : userData[0].role === "subadmin" ? "/subadmin" : "/user";
-                router.push(redirectTo);
-            } else {
-                setErrorMessage("Role not found. Please contact support.");
-            }
-        } catch (error) {
-            setErrorMessage(error.message);
+            setErrorMessage("Invalid email or password.");
         }
     };
 
@@ -98,12 +74,6 @@ export default function LoginPage() {
                     className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded text-lg transition duration-300"
                 >
                     Login
-                </button>
-                <button 
-                    onClick={handleGoogleLogin} 
-                    className="w-full bg-red-500 hover:bg-red-600 text-white p-3 rounded text-lg mt-4 transition duration-300"
-                >
-                    Login with Google
                 </button>
             </div>
         </div>

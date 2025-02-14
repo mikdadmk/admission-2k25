@@ -1,21 +1,24 @@
+// admission-management/src/app/layout.js
 "use client";
 
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import "@/styles/globals.css";
 
 function RedirectBasedOnRole() {
-    const { user, role, loading } = useAuth() || {};
-    const [isRedirecting, setIsRedirecting] = useState(false);
+    const { user, role, loading } = useAuth();
+    const router = useRouter();
     const pathname = usePathname();
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
         if (loading) return;
 
         if (!user) {
+            router.push("/login");
             return;
         }
 
@@ -23,7 +26,7 @@ function RedirectBasedOnRole() {
             setIsRedirecting(true);
             const redirectTo = role === "admin" ? "/admin" : role === "subadmin" ? "/subadmin" : "/user";
             if (pathname !== redirectTo) {
-                window.location.replace(redirectTo);
+                router.replace(redirectTo);
             }
         }
     }, [user, role, loading, pathname, isRedirecting]);
@@ -47,7 +50,7 @@ export default function Layout({ children }) {
 }
 
 function AuthWrapper({ children }) {
-    const { role } = useAuth() || {};
+    const { role } = useAuth();
     const pathname = usePathname();
     const hideSidebarRoutes = ["/login", "/register"];
     const showSidebar = role === "admin" || role === "subadmin" || role === "user";

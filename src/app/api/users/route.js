@@ -1,16 +1,26 @@
-// admission-management/src/app/api/users/route.js
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 
-export async function GET() {
+export async function GET(req) {
     try {
+        const url = new URL(req.url);
+        const email = url.searchParams.get("email");
+
+        if (!email) {
+            return NextResponse.json({ error: "Email required" }, { status: 400 });
+        }
+
         const client = await clientPromise;
         const db = client.db("admission_management");
-        const users = await db.collection("users").find({}).toArray();
+        const user = await db.collection("users").findOne({ email });
 
-        return NextResponse.json(users, { status: 200 });
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({ role: user.role }, { status: 200 });
     } catch (error) {
-        console.error("Error fetching users:", error);
-        return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
+        console.error("Error fetching user role:", error);
+        return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 });
     }
 }
